@@ -1,0 +1,61 @@
+import type { Agent } from '@/types';
+
+export const categories = ['Productivity', 'Image AI', 'Voice AI', 'Coding', 'Marketing'];
+
+export const mockAgents: Agent[] = [
+  {
+    id: 'agent-1',
+    name: 'Visionary Pro',
+    description: 'High-fidelity image generation model optimized for architectural visualization and product design. Capable of rendering photorealistic outputs from minimal text prompts.',
+    priceSOL: 2.5,
+    category: 'Image AI',
+    creator: '0x7Fa...3b9D',
+    previewImage: 'https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+    demoUrl: 'https://demo.agentmart.com/visionary',
+    creatorAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80',
+  },
+  {
+    id: 'agent-2',
+    name: 'VoiceSynthex',
+    description: 'Ultra-realistic text-to-speech synthesis engine featuring zero-shot voice cloning and multi-lingual support. Ideal for dynamic content generation.',
+    priceSOL: 1.8,
+    category: 'Voice AI',
+    creator: '0x9Bc...1a4F',
+    previewImage: 'https://images.unsplash.com/photo-1589254065878-42c9da997008?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+    demoUrl: 'https://demo.agentmart.com/voicesynthex',
+    creatorAvatar: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80',
+  },
+  {
+    id: 'agent-3',
+    name: 'DataStructurizer',
+    description: 'Automated data extraction and structuring agent. Converts unstructured text and documents into clean JSON/CSV formats with high accuracy.',
+    priceSOL: 0.5,
+    category: 'Productivity',
+    creator: '0x2De...8c2A',
+    previewImage: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+    demoUrl: 'https://demo.agentmart.com/datastruct',
+    creatorAvatar: 'https://images.unsplash.com/photo-1527980965255-d3b416303d12?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80',
+  },
+  {
+    id: 'agent-4',
+    name: 'CodeReview Sentinel',
+    description: 'Autonomous code review agent that analyzes pull requests for security vulnerabilities, performance bottlenecks, and style guide adherence.',
+    priceSOL: 3.0,
+    category: 'Coding',
+    creator: '0x5Ef...9d1B',
+    previewImage: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+    demoUrl: 'https://demo.agentmart.com/sentinel',
+    creatorAvatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80',
+  },
+  {
+    id: 'agent-5',
+    name: 'CopyWrite Alpha',
+    description: 'Marketing copy generation model trained on high-converting ad variants. Generates tailored copy for social media, email campaigns, and landing pages.',
+    priceSOL: 0.8,
+    category: 'Marketing',
+    creator: '0x1Ab...4f5C',
+    previewImage: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+    demoUrl: 'https://demo.agentmart.com/copywrite',
+    creatorAvatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80',
+  },
+];
