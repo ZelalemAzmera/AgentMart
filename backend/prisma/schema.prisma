@@ -1,0 +1,131 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─── ENUMS ───────────────────────────────────────────────────
+
+enum Role {
+  BUYER
+  DEVELOPER
+  ADMIN
+}
+
+enum Category {
+  IMAGE
+  TEXT
+  VOICE
+  CODE
+  DATA
+  PRODUCTIVITY
+  OTHER
+}
+
+enum PurchaseStatus {
+  PENDING
+  CONFIRMED
+  FAILED
+}
+
+// ─── MODELS ──────────────────────────────────────────────────
+
+model User {
+  id            String     @id @default(cuid())
+  walletAddress String     @unique
+  role          Role       @default(BUYER)
+  displayName   String?
+  bio           String?    @db.Text
+  avatarUrl     String?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  listedAgents  Agent[]    @relation("DeveloperAgents")
+  purchases     Purchase[]
+  reviews       Review[]
+}
+
+model Agent {
+  id            String     @id @default(cuid())
+  name          String
+  slug          String     @unique
+  description   String     @db.Text
+  shortDesc     String     @db.VarChar(200)
+  category      Category
+  tags          String[]
+  agentUrl      String
+  demoUrl       String?
+  imageUrl      String?
+  priceSOL      Float
+  isActive      Boolean    @default(true)
+  isApproved    Boolean    @default(false)
+  onChainId     String?
+  totalSales    Int        @default(0)
+  totalEarnings Float      @default(0)
+
+  developerId   String
+  developer     User       @relation("DeveloperAgents", fields: [developerId], references: [id])
+
+  purchases     Purchase[]
+  reviews       Review[]
+  demoLogs      DemoLog[]
+
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+}
+
+model Purchase {
+  id              String          @id @default(cuid())
+  txSignature     String          @unique
+  amountSOL       Float
+  status          PurchaseStatus  @default(PENDING)
+  verifiedOnChain Boolean         @default(false)
+  failReason      String?
+
+  buyerId         String
+  buyer           User            @relation(fields: [buyerId], references: [id])
+
+  agentId         String
+  agent           Agent           @relation(fields: [agentId], references: [id])
+
+  createdAt       DateTime        @default(now())
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  rating    Int
+  comment   String?  @db.Text
+
+  agentId   String
+  agent     Agent    @relation(fields: [agentId], references: [id])
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@unique([agentId, userId])
+}
+
+model DemoLog {
+  id        String   @id @default(cuid())
+  agentId   String
+  agent     Agent    @relation(fields: [agentId], references: [id])
+  ipHash    String?
+  createdAt DateTime @default(now())
+}
+
+model Nonce {
+  id            String   @id @default(cuid())
+  walletAddress String
+  nonce         String   @unique
+  expiresAt     DateTime
+  used          Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  @@index([walletAddress])
+}
