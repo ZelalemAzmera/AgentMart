@@ -43,8 +43,8 @@ function MarketplaceContent() {
     if (search) {
       results = results.filter(
         (a) =>
-          a.name.toLowerCase().includes(search.toLowerCase()) ||
-          a.description.toLowerCase().includes(search.toLowerCase())
+          (a.name && a.name.toLowerCase().includes(search.toLowerCase())) ||
+          (a.description && a.description.toLowerCase().includes(search.toLowerCase()))
       );
     }
 
