@@ -7,12 +7,14 @@ import clsx from 'clsx';
 import { useEffect, useState } from 'react';
 import { useWalletStore, useCartStore } from '@/lib/store';
 import { WalletService } from '@/services/wallet/wallet.service';
+import { ConnectWalletModal } from '@/components/ConnectWalletModal';
 
 export function Navbar({ isTransparent = false }: { isTransparent?: boolean }) {
   const pathname = usePathname();
   const { connected, address, connect, disconnect } = useWalletStore();
   const { cart } = useCartStore();
   const [mounted, setMounted] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -23,8 +25,7 @@ export function Navbar({ isTransparent = false }: { isTransparent?: boolean }) {
       await WalletService.disconnectWallet();
       disconnect();
     } else {
-      const addr = await WalletService.connectWallet();
-      connect(addr);
+      setIsModalOpen(true);
     }
   };
 
@@ -113,6 +114,7 @@ export function Navbar({ isTransparent = false }: { isTransparent?: boolean }) {
           )}
         </div>
       </div>
+      <ConnectWalletModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </header>
   );
 }
