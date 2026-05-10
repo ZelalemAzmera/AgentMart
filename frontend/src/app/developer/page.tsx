@@ -9,6 +9,10 @@ import {
 import { useWalletStore } from '@/lib/store';
 import { DeveloperAPI } from '@/services/api/developer.api';
 import Link from 'next/link';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { PublicKey } from '@solana/web3.js';
+import { handleListAgent } from '@/utils/handleListAgent';
+import { useAuthStore } from '@/lib/store';
 
 const mockStats = [
   { label: 'Total Volume', value: '◎ 8.45', icon: TrendingUp },
@@ -38,7 +42,13 @@ const statusBadge = (status: string) => {
   return <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-[4px] text-[10px] font-bold uppercase bg-[#18181b] border border-[#27272a] text-white tracking-wider"><span className="w-1 h-1 rounded-full bg-red-500"/> Offline</span>;
 };
 
-const categories = ['Productivity', 'Image AI', 'Voice AI', 'Coding', 'Marketing'];
+const categories = [
+  { label: 'Productivity', value: 'PRODUCTIVITY' },
+  { label: 'Image AI', value: 'IMAGE' },
+  { label: 'Voice AI', value: 'VOICE' },
+  { label: 'Coding', value: 'CODE' },
+  { label: 'Marketing', value: 'OTHER' },
+];
 
 interface FormData {
   name: string;
@@ -46,36 +56,60 @@ interface FormData {
   category: string;
   priceSOL: string;
   demoUrl: string;
-  previewImage: string;
+  imageUrl: string;
+  shortDesc: string;
+  agentUrl: string;
 }
 
 export default function DeveloperPage() {
-  const { connected, address } = useWalletStore();
+  const { connected } = useWalletStore();
+  const wallet = useWallet();
+  const { token } = useAuthStore();
   const [showModal, setShowModal] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [form, setForm] = useState<FormData>({
-    name: '', description: '', category: 'Productivity', priceSOL: '', demoUrl: '', previewImage: ''
+    name: '', description: '', shortDesc: '', category: 'PRODUCTIVITY', priceSOL: '', demoUrl: '', imageUrl: '', agentUrl: ''
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!connected || !address) return;
+    if (!wallet.connected || !wallet.publicKey || !token) return;
 
-    setSubmitted(true);
-    await DeveloperAPI.createAgent({
-      name: form.name,
-      description: form.description,
-      category: form.category,
-      priceSOL: parseFloat(form.priceSOL),
-      previewImage: form.previewImage,
-      demoUrl: form.demoUrl,
-    }, address);
+    try {
+      setSubmitted(true);
+      const price = parseFloat(form.priceSOL);
+      
+      const PROGRAM_ID = new PublicKey(process.env.NEXT_PUBLIC_PROGRAM_ID || 'Gkh5t4pgh19DgdAogGdADhzKhYpDBQynUcHvWvL9A9Yz');
+      
+      await handleListAgent(
+        wallet as any,
+        form.name,
+        form.description,
+        price,
+        PROGRAM_ID
+      );
 
-    setTimeout(() => {
+      await DeveloperAPI.createAgent({
+        name: form.name,
+        description: form.description,
+        shortDesc: form.shortDesc,
+        category: form.category,
+        priceSOL: price,
+        imageUrl: form.imageUrl,
+        demoUrl: form.demoUrl,
+        agentUrl: form.agentUrl,
+      }, token);
+
+      setTimeout(() => {
+        setSubmitted(false);
+        setShowModal(false);
+        setForm({ name: '', description: '', shortDesc: '', category: 'PRODUCTIVITY', priceSOL: '', demoUrl: '', imageUrl: '', agentUrl: '' });
+      }, 2000);
+    } catch (err) {
+      console.error('Listing failed:', err);
       setSubmitted(false);
-      setShowModal(false);
-      setForm({ name: '', description: '', category: 'Productivity', priceSOL: '', demoUrl: '', previewImage: '' });
-    }, 2000);
+      alert('Failed to list agent.');
+    }
   };
 
   return (
@@ -144,8 +178,10 @@ export default function DeveloperPage() {
                     </div>
 
                     {[
+                      { id: 'shortDesc', label: 'Short Description', type: 'text' },
                       { id: 'demoUrl', label: 'Demo Gateway URL', type: 'url' },
-                      { id: 'previewImage', label: 'Visual Asset Identifier', type: 'url' },
+                      { id: 'imageUrl', label: 'Visual Asset Identifier', type: 'url' },
+                      { id: 'agentUrl', label: 'Agent Access URL', type: 'url' },
                     ].map((field) => (
                       <div key={field.id}>
                         <label className="block text-[10px] font-bold text-[#52525b] uppercase tracking-[0.2em] mb-2.5">{field.label}</label>
@@ -166,7 +202,7 @@ export default function DeveloperPage() {
                         onChange={(e) => setForm({ ...form, category: e.target.value })}
                         className="w-full bg-[#09090b] border border-[#27272a] rounded-md px-4 py-3 text-sm text-white focus:outline-none focus:border-white cursor-pointer transition-all duration-200"
                       >
-                        {categories.map((c) => <option key={c} value={c}>{c}</option>)}
+                        {categories.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
                       </select>
                     </div>
 

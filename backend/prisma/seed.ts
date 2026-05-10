@@ -8,10 +8,10 @@ async function main() {
 
   // Create a developer user
   const devUser = await prisma.user.upsert({
-    where: { walletAddress: 'dev111111111111111111111111111111111111111' },
+    where: { walletAddress: 'Gkh5t4pgh19DgdAogGdADhzKhYpDBQynUcHvWvL9A9Yz' },
     update: {},
     create: {
-      walletAddress: 'dev111111111111111111111111111111111111111',
+      walletAddress: 'Gkh5t4pgh19DgdAogGdADhzKhYpDBQynUcHvWvL9A9Yz',
       role: 'DEVELOPER',
       displayName: 'AgentStudio',
       bio: 'We build the best AI agents on Solana.'

@@ -7,10 +7,16 @@ import { Trash2, ShoppingCart, ArrowRight, Loader2, Check } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { PublicKey } from '@solana/web3.js';
+import { handlePurchase } from '@/utils/handlePurchase';
+import { useAuthStore } from '@/lib/store';
 
 export default function CartPage() {
   const { cart, removeFromCart, clearCart } = useCartStore();
   const { connected, address } = useWalletStore();
+  const { token } = useAuthStore();
+  const wallet = useWallet();
   const { addPurchased } = useLibraryStore();
   const { transactionStatus, updateTransactionStatus } = useTransactionStore();
   
@@ -24,8 +30,13 @@ export default function CartPage() {
       // For cart checkout, we simulate sequential purchases or a batch purchase
       for (const agent of cart) {
         updateTransactionStatus('processing');
-        const { txHash } = await TransactionsAPI.createPurchase(agent.id, address);
-        await TransactionsAPI.verifyPurchase(txHash);
+        const signature = await handlePurchase(
+          wallet as any, // WalletContextState is compatible with BuyerWallet
+          new PublicKey(agent.developer.walletAddress),
+          agent.priceSOL
+        );
+        
+        await TransactionsAPI.createPurchase(agent.id, signature, token!);
         addPurchased(agent);
       }
       
@@ -74,7 +85,7 @@ export default function CartPage() {
                 className="bg-[#18181b] border border-[#27272a] rounded-lg p-4 flex items-center gap-6"
               >
                 <div className="relative w-24 h-24 rounded-md overflow-hidden bg-[#09090b] flex-shrink-0">
-                  <Image src={agent.previewImage} alt={agent.name} fill className="object-cover" />
+                  <Image src={agent.imageUrl || 'https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?w=800&q=80'} alt={agent.name} fill className="object-cover" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="text-white font-medium mb-1">{agent.name}</h3>

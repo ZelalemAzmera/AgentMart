@@ -1,9 +1,12 @@
 'use client';
 
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Wallet } from 'lucide-react';
-import { useWalletStore } from '@/lib/store';
-import { WalletService } from '@/services/wallet/wallet.service';
+import { useWalletStore, useAuthStore } from '@/lib/store';
+import { AuthAPI } from '@/services/api/auth.api';
+import { useWallet } from '@solana/wallet-adapter-react';
+import bs58 from 'bs58';
 
 interface ConnectWalletModalProps {
   isOpen: boolean;
@@ -12,11 +15,47 @@ interface ConnectWalletModalProps {
 
 export function ConnectWalletModal({ isOpen, onClose }: ConnectWalletModalProps) {
   const { connect } = useWalletStore();
+  const { setToken } = useAuthStore();
+  const { select, wallets } = useWallet();
+  const [loading, setLoading] = useState(false);
 
   const handleConnect = async () => {
-    const address = await WalletService.connectWallet();
-    connect(address);
-    onClose();
+    try {
+      setLoading(true);
+      // 1. Select and connect Phantom
+      const phantom = wallets.find((w) => w.adapter.name === 'Phantom');
+      if (phantom) {
+        select(phantom.adapter.name);
+        await phantom.adapter.connect();
+      }
+
+      if (!phantom?.adapter.publicKey || !phantom.adapter.signMessage) {
+        throw new Error('Wallet not ready');
+      }
+
+      const walletAddress = phantom.adapter.publicKey.toBase58();
+
+      // 2. Get Nonce
+      const { nonce } = await AuthAPI.getNonce(walletAddress);
+
+      // 3. Sign Message
+      const message = new TextEncoder().encode(`Sign this message to authenticate with AgentMart.\nNonce: ${nonce}`);
+      const signatureBytes = await phantom.adapter.signMessage(message);
+      const signature = bs58.encode(signatureBytes);
+
+      // 4. Verify & get JWT
+      const { token } = await AuthAPI.verify(walletAddress, signature, nonce);
+
+      // 5. Store auth state
+      setToken(token);
+      connect(walletAddress);
+      onClose();
+    } catch (error) {
+      console.error('Connection error:', error);
+      alert('Failed to connect wallet. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -53,9 +92,10 @@ export function ConnectWalletModal({ isOpen, onClose }: ConnectWalletModalProps)
               </p>
               <button
                 onClick={handleConnect}
-                className="w-full py-3 px-6 rounded-md bg-white text-black font-medium transition-all hover:bg-zinc-200"
+                disabled={loading}
+                className="w-full py-3 px-6 rounded-md bg-white text-black font-medium transition-all hover:bg-zinc-200 disabled:opacity-50"
               >
-                Connect Phantom
+                {loading ? 'Connecting...' : 'Connect Phantom'}
               </button>
               <p className="mt-4 text-[10px] text-[#71717a] uppercase tracking-widest">
                 Devnet Mode Enabled

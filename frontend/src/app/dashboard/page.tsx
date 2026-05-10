@@ -67,7 +67,7 @@ export default function DashboardPage() {
               >
                 <div className="relative w-full aspect-video border-b border-[#27272a] bg-[#09090b]">
                   <Image
-                    src={agent.previewImage}
+                    src={agent.imageUrl || 'https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?w=800&q=80'}
                     alt={agent.name}
                     fill
                     className="object-cover opacity-80 group-hover:opacity-100 transition-all duration-500 group-hover:scale-105"
@@ -89,7 +89,7 @@ export default function DashboardPage() {
                       Initialize <ArrowUpRight className="w-4 h-4" />
                     </button>
                     <Link
-                      href={`/agents/${agent.id}`}
+                      href={`/agents/${agent.slug}`}
                       className="px-4 py-2.5 rounded-md border border-[#27272a] bg-[#18181b] hover:bg-[#27272a] text-[#71717a] hover:text-white text-xs font-bold uppercase tracking-widest transition-all"
                     >
                       Config

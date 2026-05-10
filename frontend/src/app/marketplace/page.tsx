@@ -28,7 +28,7 @@ function MarketplaceContent() {
       setLoading(true);
       try {
         const data = await MarketplaceAPI.getAgents();
-        setAgents(data);
+        setAgents(data.agents || []);
       } catch (error) {
         console.error('Failed to fetch agents:', error);
       } finally {
@@ -37,7 +37,6 @@ function MarketplaceContent() {
     };
     fetchAgents();
   }, [setAgents]);
-
   const filtered = useMemo(() => {
     let results = [...agents];
 

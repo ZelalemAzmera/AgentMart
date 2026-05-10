@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import type { Agent, Transaction } from '@/types';
 
 // --- Wallet Store ---
@@ -85,3 +86,19 @@ export const useLibraryStore = create<LibraryStore>((set) => ({
         : [...state.purchased, agent],
     })),
 }));
+
+// --- Auth Store ---
+interface AuthStore {
+  token: string | null;
+  setToken: (token: string | null) => void;
+}
+
+export const useAuthStore = create<AuthStore>()(
+  persist(
+    (set) => ({
+      token: null,
+      setToken: (token) => set({ token }),
+    }),
+    { name: 'agentmart-auth' }
+  )
+);

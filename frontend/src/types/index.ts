@@ -1,13 +1,22 @@
 export interface Agent {
   id: string;
   name: string;
+  slug: string;
   description: string;
+  shortDesc: string;
   priceSOL: number;
   category: string;
-  creator: string;
-  previewImage: string;
+  tags: string[];
+  imageUrl?: string;
   demoUrl?: string;
-  creatorAvatar?: string;
+  totalSales: number;
+  createdAt: string;
+  developer: {
+    id: string;
+    displayName: string | null;
+    walletAddress: string;
+    avatarUrl: string | null;
+  };
 }
 
 export interface User {
@@ -26,8 +35,10 @@ export interface Transaction {
 export interface CreateAgentPayload {
   name: string;
   description: string;
+  shortDesc: string;
   category: string;
   priceSOL: number;
-  previewImage: string;
+  imageUrl: string;
   demoUrl: string;
+  agentUrl: string;
 }

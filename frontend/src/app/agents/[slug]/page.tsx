@@ -11,9 +11,12 @@ import {
 } from 'lucide-react';
 import { MarketplaceAPI } from '@/services/api/marketplace.api';
 import { TransactionsAPI } from '@/services/api/transactions.api';
-import { useWalletStore, useLibraryStore, useTransactionStore, useCartStore } from '@/lib/store';
+import { useWalletStore, useLibraryStore, useTransactionStore, useCartStore, useAuthStore } from '@/lib/store';
 import { ConnectWalletModal } from '@/components/ConnectWalletModal';
 import type { Agent } from '@/types';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { PublicKey } from '@solana/web3.js';
+import { handlePurchase } from '@/utils/handlePurchase';
 
 const txLabels: Record<string, string> = {
   idle:       '',
@@ -41,7 +44,9 @@ export default function AgentDetailPage({
   const [agent, setAgent] = useState<Agent | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const { connected, address } = useWalletStore();
+  const { connected } = useWalletStore();
+  const wallet = useWallet();
+  const { token } = useAuthStore();
   const { purchased, addPurchased } = useLibraryStore();
   const { transactionStatus, updateTransactionStatus } = useTransactionStore();
   const { addToCart } = useCartStore();
@@ -64,18 +69,20 @@ export default function AgentDetailPage({
   const isOwned = purchased.some((p) => p.id === agent?.id);
 
   const handleBuy = async () => {
-    if (!connected || !address) { setShowModal(true); return; }
+    if (!wallet.connected || !wallet.publicKey || !token) { setShowModal(true); return; }
     if (!agent || isOwned || transactionStatus !== 'idle') return;
 
     updateTransactionStatus('pending');
     try {
-      const { txHash } = await TransactionsAPI.createPurchase(agent.id, address);
-      
       updateTransactionStatus('processing');
-      await sleep(1500); // Simulate processing
+      const signature = await handlePurchase(
+        wallet as any,
+        new PublicKey(agent.developer.walletAddress),
+        agent.priceSOL
+      );
       
       updateTransactionStatus('confirmed');
-      await TransactionsAPI.verifyPurchase(txHash);
+      await TransactionsAPI.createPurchase(agent.id, signature, token);
       
       updateTransactionStatus('success');
       addPurchased(agent);
@@ -118,7 +125,7 @@ export default function AgentDetailPage({
           >
             <div className="relative w-full aspect-video rounded-lg overflow-hidden bg-[#09090b] border border-[#27272a] mb-8">
               <Image
-                src={agent.previewImage}
+                src={agent.imageUrl || 'https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?w=800&q=80'}
                 alt={agent.name}
                 fill
                 className="object-cover"
@@ -184,15 +191,17 @@ export default function AgentDetailPage({
                 <div className="flex items-center gap-3 mb-8 pb-8 border-b border-[#27272a]">
                   <div className="relative w-8 h-8 rounded-full overflow-hidden bg-[#27272a]">
                     <Image
-                      src={agent.creatorAvatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80'}
-                      alt={agent.creator}
+                      src={agent.developer.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80'}
+                      alt={agent.developer.displayName || agent.developer.walletAddress}
                       fill
                       className="object-cover"
                     />
                   </div>
                   <div>
                     <p className="text-xs text-[#71717a] mb-0.5">Developed by</p>
-                    <p className="text-sm font-medium text-white">{agent.creator.slice(0, 4)}...{agent.creator.slice(-4)}</p>
+                    <p className="text-sm font-medium text-white">
+                      {agent.developer.displayName || `${agent.developer.walletAddress.slice(0, 4)}...${agent.developer.walletAddress.slice(-4)}`}
+                    </p>
                   </div>
                 </div>
 
