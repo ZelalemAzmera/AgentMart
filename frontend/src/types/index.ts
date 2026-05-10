@@ -9,6 +9,7 @@ export interface Agent {
   tags: string[];
   imageUrl?: string;
   demoUrl?: string;
+  agentUrl?: string;
   totalSales: number;
   createdAt: string;
   developer: {
