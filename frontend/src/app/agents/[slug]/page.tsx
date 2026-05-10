@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  ArrowLeft, Activity, Check, Loader2,
+  ArrowLeft, Activity, Check, Loader2, Star,
   ShieldCheck, ArrowUpRight, Play, Copy, CheckCircle
 } from 'lucide-react';
 import { MarketplaceAPI } from '@/services/api/marketplace.api';
@@ -22,6 +22,33 @@ const features = [
   'Priority queue processing',
   'Export in all standard formats',
   'Lifetime updates',
+];
+
+const mockReviews = [
+  {
+    id: 1,
+    user: "0xA1b...4f9E",
+    avatar: "https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=100&q=80",
+    rating: 5,
+    date: "2 days ago",
+    comment: "Incredible agent! The speed and accuracy are unmatched. Saved me hours of manual work."
+  },
+  {
+    id: 2,
+    user: "0x3C4...9b1A",
+    avatar: "https://images.unsplash.com/photo-1527980965255-d3b416303d12?w=100&q=80",
+    rating: 5,
+    date: "1 week ago",
+    comment: "Clean API, easy integration, and the deterministic outputs are exactly what I needed for my dApp."
+  },
+  {
+    id: 3,
+    user: "0x8F2...e7B2",
+    avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&q=80",
+    rating: 4,
+    date: "2 weeks ago",
+    comment: "Works perfectly for the most part. Occasional latency spikes during high network congestion, but overall fantastic."
+  }
 ];
 
 export default function AgentDetailPage({
@@ -252,6 +279,61 @@ export default function AgentDetailPage({
                         <Check className="w-3.5 h-3.5 text-white" />
                       </div>
                       <span className="text-[#d4d4d8] text-sm font-medium">{feat}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Reviews & Ratings Section */}
+              <div>
+                <h3 className="text-[11px] font-black text-[#52525b] uppercase tracking-[0.3em] mb-6 pb-4 border-b border-[#27272a]">Ratings & Reviews</h3>
+                
+                <div className="flex items-center gap-6 mb-8">
+                  <div className="flex flex-col items-center justify-center bg-[#18181b] border border-[#27272a] rounded-xl p-6 min-w-[140px]">
+                    <span className="text-4xl font-black text-white mb-1">4.8</span>
+                    <div className="flex gap-1 mb-2">
+                      {[1, 2, 3, 4, 5].map((i) => (
+                        <Star key={i} className={`w-4 h-4 ${i <= 4 ? 'text-emerald-400 fill-emerald-400' : i === 5 ? 'text-emerald-400/50 fill-emerald-400/50' : 'text-[#27272a]'}`} />
+                      ))}
+                    </div>
+                    <span className="text-[10px] font-bold text-[#52525b] uppercase tracking-widest">128 Reviews</span>
+                  </div>
+                  
+                  <div className="flex-1 space-y-2">
+                    {[5, 4, 3, 2, 1].map((star, idx) => {
+                      const percentages = [85, 10, 5, 0, 0];
+                      return (
+                        <div key={star} className="flex items-center gap-3">
+                          <span className="text-xs font-bold text-[#a1a1aa] w-2">{star}</span>
+                          <div className="flex-1 h-1.5 bg-[#18181b] rounded-full overflow-hidden">
+                            <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${percentages[idx]}%` }} />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  {mockReviews.map((review) => (
+                    <div key={review.id} className="bg-[#18181b] border border-[#27272a] rounded-lg p-5">
+                      <div className="flex justify-between items-start mb-3">
+                        <div className="flex items-center gap-3">
+                          <div className="relative w-8 h-8 rounded-full overflow-hidden bg-[#27272a]">
+                            <Image src={review.avatar} alt="User" fill className="object-cover" sizes="32px" />
+                          </div>
+                          <div>
+                            <span className="text-xs font-bold text-white block">{review.user}</span>
+                            <span className="text-[10px] text-[#52525b]">{review.date}</span>
+                          </div>
+                        </div>
+                        <div className="flex gap-0.5">
+                          {[...Array(5)].map((_, i) => (
+                            <Star key={i} className={`w-3.5 h-3.5 ${i < review.rating ? 'text-emerald-400 fill-emerald-400' : 'text-[#27272a]'}`} />
+                          ))}
+                        </div>
+                      </div>
+                      <p className="text-[#a1a1aa] text-sm leading-relaxed">{review.comment}</p>
                     </div>
                   ))}
                 </div>
