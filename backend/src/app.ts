@@ -19,7 +19,10 @@ const app: Application = express();
 // Middleware
 app.use(express.json());
 app.use(cors({
-  origin: env.CORS_ORIGIN,
+  origin: function (origin, callback) {
+    // Allow all origins for hackathon/testing purposes
+    callback(null, true);
+  },
   credentials: true
 }));
 app.use(globalLimiter);
