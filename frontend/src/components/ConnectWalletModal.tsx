@@ -51,9 +51,9 @@ export function ConnectWalletModal({ isOpen, onClose }: ConnectWalletModalProps)
       setToken(token);
       connect(walletAddress);
       onClose();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Connection error:', error);
-      alert('Failed to connect wallet. Please try again.');
+      alert(`Connection Failed: ${error.message || 'Please try again.'}`);
     } finally {
       setLoading(false);
     }
@@ -71,11 +71,11 @@ export function ConnectWalletModal({ isOpen, onClose }: ConnectWalletModalProps)
             className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100]"
           />
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 10 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 10 }}
+            initial={{ opacity: 0, scale: 0.95, x: "-50%", y: "-40%" }}
+            animate={{ opacity: 1, scale: 1, x: "-50%", y: "-50%" }}
+            exit={{ opacity: 0, scale: 0.95, x: "-50%", y: "-40%" }}
             transition={{ ease: [0.16, 1, 0.3, 1], duration: 0.3 }}
-            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[101] w-full max-w-md px-4"
+            className="fixed left-1/2 top-1/2 z-[101] w-full max-w-md px-4"
           >
             <div className="bg-[#18181b] border border-[#27272a] rounded-lg p-8 text-center shadow-2xl relative">
               <button
