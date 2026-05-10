@@ -62,7 +62,7 @@ export default function AgentDetailPage({
   const isOwned = mounted && purchased.some((p) => p.id === agent?.id);
 
   const handleCopy = () => {
-    if (!agent) return;
+    if (!agent || !agent.developer?.walletAddress) return;
     navigator.clipboard.writeText(agent.developer.walletAddress);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -268,7 +268,7 @@ export default function AgentDetailPage({
                 <div className="flex items-center gap-4">
                   <div className="relative w-12 h-12 rounded-full overflow-hidden bg-[#27272a] border-2 border-[#3f3f46]">
                     <Image
-                      src={agent.developer.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80'}
+                      src={agent.developer?.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80'}
                       alt="Creator"
                       fill className="object-cover"
                     />
@@ -276,7 +276,7 @@ export default function AgentDetailPage({
                   <div>
                     <span className="text-[10px] font-bold text-[#52525b] uppercase tracking-[0.2em] block mb-0.5">Created by</span>
                     <span className="text-sm font-bold text-white">
-                      {agent.developer.displayName || `${agent.developer.walletAddress.slice(0, 4)}...${agent.developer.walletAddress.slice(-4)}`}
+                      {agent.developer?.displayName || (agent.developer?.walletAddress ? `${agent.developer.walletAddress.slice(0, 4)}...${agent.developer.walletAddress.slice(-4)}` : 'Unknown Creator')}
                     </span>
                   </div>
                 </div>
@@ -315,7 +315,7 @@ export default function AgentDetailPage({
                           <p className="text-xs text-[#71717a] mb-3">Send exactly <strong className="text-white">◎ {agent.priceSOL}</strong> to the creator's wallet address.</p>
                           <div className="flex items-center gap-2">
                             <code className="flex-1 bg-[#18181b] border border-[#27272a] rounded px-3 py-2 text-[11px] text-[#a1a1aa] font-mono truncate">
-                              {agent.developer.walletAddress}
+                              {agent.developer?.walletAddress || 'No Wallet Address Provided'}
                             </code>
                             <button
                               onClick={handleCopy}
