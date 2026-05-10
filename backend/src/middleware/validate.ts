@@ -20,7 +20,7 @@ export const validate = (schema: ZodSchema) => {
       next();
       } catch (error: any) {
       if (error instanceof ZodError) {
-        const zodError = error as ZodError;
+        const zodError = error as any;
         const errorMessages = zodError.errors.map((err: any) => `${err.path.join('.')}: ${err.message}`).join(', ');
         return next(new AppError(`Validation failed: ${errorMessages}`, 400, 'VALIDATION_ERROR'));
       }
