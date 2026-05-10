@@ -29,18 +29,19 @@ export function ConnectWalletModal({ isOpen, onClose }: ConnectWalletModalProps)
         await phantom.adapter.connect();
       }
 
-      if (!phantom?.adapter.publicKey || !phantom.adapter.signMessage) {
+      const phantomAdapter = phantom?.adapter as any;
+      if (!phantomAdapter?.publicKey || !phantomAdapter?.signMessage) {
         throw new Error('Wallet not ready');
       }
 
-      const walletAddress = phantom.adapter.publicKey.toBase58();
+      const walletAddress = phantomAdapter.publicKey.toBase58();
 
       // 2. Get Nonce
       const { nonce } = await AuthAPI.getNonce(walletAddress);
 
       // 3. Sign Message
       const message = new TextEncoder().encode(`Sign this message to authenticate with AgentMart.\nNonce: ${nonce}`);
-      const signatureBytes = await phantom.adapter.signMessage(message);
+      const signatureBytes = await phantomAdapter.signMessage(message);
       const signature = bs58.encode(signatureBytes);
 
       // 4. Verify & get JWT
