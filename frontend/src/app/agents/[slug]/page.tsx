@@ -57,7 +57,7 @@ export default function AgentDetailPage({
   useEffect(() => {
     const fetchAgent = async () => {
       setLoading(true);
-      const data = await MarketplaceAPI.getAgentById(slug);
+      const data = await MarketplaceAPI.getAgentBySlug(slug);
       setAgent(data);
       setLoading(false);
     };
