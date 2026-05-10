@@ -1,46 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  TrendingUp, Box, Layers, Plus, X,
-  Activity, CheckCircle, ArrowLeft
-} from 'lucide-react';
-import { useWalletStore } from '@/lib/store';
+import { ArrowLeft, UploadCloud, Link as LinkIcon, Image as ImageIcon, DollarSign, Activity, CheckCircle, Loader2 } from 'lucide-react';
+import { useWalletStore, useAuthStore } from '@/lib/store';
 import { DeveloperAPI } from '@/services/api/developer.api';
 import Link from 'next/link';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { PublicKey } from '@solana/web3.js';
-import { handleListAgent } from '@/utils/handleListAgent';
-import { useAuthStore } from '@/lib/store';
-
-const mockStats = [
-  { label: 'Total Volume', value: '◎ 8.45', icon: TrendingUp },
-  { label: 'Total Distributions', value: '23', icon: Box },
-  { label: 'Active Deployments', value: '4', icon: Layers },
-];
-
-const mockListings = [
-  { id: '1', name: 'SlideAI', category: 'Productivity', price: 0.4, status: 'active', sales: 12 },
-  { id: '3', name: 'LogoCraft', category: 'Image AI', price: 0.5, status: 'active', sales: 8 },
-  { id: '5', name: 'AdCopy Pro', category: 'Marketing', price: 0.35, status: 'active', sales: 3 },
-  { id: '7', name: 'TextSummarize', category: 'Productivity', price: 0.25, status: 'pending', sales: 0 },
-];
-
-const mockSales = [
-  { agent: 'SlideAI', buyer: '7xKm...3qPz', amount: 0.4, time: '2 min ago', tx: 'abc123' },
-  { agent: 'LogoCraft', buyer: 'BnRt...9wXv', amount: 0.5, time: '1 hr ago', tx: 'def456' },
-  { agent: 'SlideAI', buyer: '4pQa...7mLc', amount: 0.4, time: '3 hrs ago', tx: 'ghi789' },
-  { agent: 'AdCopy Pro', buyer: 'Jk2s...5nYr', amount: 0.35, time: '1 day ago', tx: 'jkl012' },
-];
-
-const statusBadge = (status: string) => {
-  if (status === 'active')
-    return <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-[4px] text-[10px] font-bold uppercase bg-[#18181b] border border-[#27272a] text-white tracking-wider"><span className="w-1 h-1 rounded-full bg-emerald-500"/> Active</span>;
-  if (status === 'pending')
-    return <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-[4px] text-[10px] font-bold uppercase bg-[#18181b] border border-[#27272a] text-white tracking-wider"><span className="w-1 h-1 rounded-full bg-amber-500"/> Validating</span>;
-  return <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-[4px] text-[10px] font-bold uppercase bg-[#18181b] border border-[#27272a] text-white tracking-wider"><span className="w-1 h-1 rounded-full bg-red-500"/> Offline</span>;
-};
+import { ConnectWalletModal } from '@/components/ConnectWalletModal';
 
 const categories = [
   { label: 'Productivity', value: 'PRODUCTIVITY' },
@@ -50,45 +17,42 @@ const categories = [
   { label: 'Marketing', value: 'OTHER' },
 ];
 
-interface FormData {
-  name: string;
-  description: string;
-  category: string;
-  priceSOL: string;
-  demoUrl: string;
-  imageUrl: string;
-  shortDesc: string;
-  agentUrl: string;
-}
-
 export default function DeveloperPage() {
   const { connected } = useWalletStore();
   const wallet = useWallet();
   const { token } = useAuthStore();
-  const [showModal, setShowModal] = useState(false);
+  const [showWalletModal, setShowWalletModal] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const [form, setForm] = useState<FormData>({
-    name: '', description: '', shortDesc: '', category: 'PRODUCTIVITY', priceSOL: '', demoUrl: '', imageUrl: '', agentUrl: ''
+  
+  const [mounted, setMounted] = useState(false);
+  
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const [form, setForm] = useState({
+    name: '',
+    shortDesc: '',
+    description: '',
+    category: 'PRODUCTIVITY',
+    priceSOL: '',
+    demoUrl: '',
+    imageUrl: '',
+    agentUrl: '',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!wallet.connected || !wallet.publicKey || !token) return;
+    if (!connected || !token) {
+      setShowWalletModal(true);
+      return;
+    }
 
+    setSubmitting(true);
     try {
-      setSubmitted(true);
       const price = parseFloat(form.priceSOL);
       
-      const PROGRAM_ID = new PublicKey(process.env.NEXT_PUBLIC_PROGRAM_ID || 'Gkh5t4pgh19DgdAogGdADhzKhYpDBQynUcHvWvL9A9Yz');
-      
-      await handleListAgent(
-        wallet as any,
-        form.name,
-        form.description,
-        price,
-        PROGRAM_ID
-      );
-
       await DeveloperAPI.createAgent({
         name: form.name,
         description: form.description,
@@ -100,247 +64,221 @@ export default function DeveloperPage() {
         agentUrl: form.agentUrl,
       }, token);
 
+      setSubmitted(true);
       setTimeout(() => {
         setSubmitted(false);
-        setShowModal(false);
         setForm({ name: '', description: '', shortDesc: '', category: 'PRODUCTIVITY', priceSOL: '', demoUrl: '', imageUrl: '', agentUrl: '' });
-      }, 2000);
+      }, 4000);
     } catch (err) {
       console.error('Listing failed:', err);
-      setSubmitted(false);
-      alert('Failed to list agent.');
+      alert('Failed to list agent. Please ensure all fields are correct.');
+    } finally {
+      setSubmitting(false);
     }
   };
 
+  const inputClass = "w-full bg-[#09090b] border border-[#27272a] rounded-lg px-4 py-3.5 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-all duration-200 placeholder-[#52525b]";
+  const labelClass = "block text-[10px] font-bold text-[#52525b] uppercase tracking-[0.2em] mb-2.5 ml-1";
+
   return (
     <>
-      <AnimatePresence>
-        {showModal && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowModal(false)}
-              className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50"
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              transition={{ ease: [0.16, 1, 0.3, 1], duration: 0.3 }}
-              className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-lg mx-4"
-            >
-              <div className="bg-[#18181b] border border-[#27272a] rounded-lg p-10 shadow-2xl">
-                <div className="flex items-center justify-between mb-10">
-                  <h2 className="text-xl font-bold text-white uppercase tracking-widest">Initialize System</h2>
-                  <button onClick={() => setShowModal(false)} className="text-[#52525b] hover:text-white transition-colors">
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
+      <ConnectWalletModal isOpen={showWalletModal} onClose={() => setShowWalletModal(false)} />
 
-                {submitted ? (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="text-center py-12"
-                  >
-                    <div className="w-12 h-12 border border-[#27272a] rounded-full flex items-center justify-center mx-auto mb-6">
-                      <CheckCircle className="w-6 h-6 text-emerald-500" />
-                    </div>
-                    <p className="text-white font-bold text-base uppercase tracking-widest mb-2">Network Queued</p>
-                    <p className="text-[#52525b] text-xs">Deployment process initiated on the AgentMart protocol.</p>
-                  </motion.div>
-                ) : (
-                  <form onSubmit={handleSubmit} className="space-y-6">
-                    <div className="grid grid-cols-2 gap-6">
-                      <div>
-                        <label className="block text-[10px] font-bold text-[#52525b] uppercase tracking-[0.2em] mb-2.5">Agent Name</label>
-                        <input
-                          type="text"
-                          value={form.name}
-                          onChange={(e) => setForm({ ...form, name: e.target.value })}
-                          required
-                          className="w-full bg-[#09090b] border border-[#27272a] rounded-md px-4 py-3 text-sm text-white focus:outline-none focus:border-white transition-all duration-200"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[10px] font-bold text-[#52525b] uppercase tracking-[0.2em] mb-2.5">Price (SOL)</label>
-                        <input
-                          type="number"
-                          step="0.01"
-                          value={form.priceSOL}
-                          onChange={(e) => setForm({ ...form, priceSOL: e.target.value })}
-                          required
-                          className="w-full bg-[#09090b] border border-[#27272a] rounded-md px-4 py-3 text-sm text-white focus:outline-none focus:border-white transition-all duration-200"
-                        />
-                      </div>
-                    </div>
-
-                    {[
-                      { id: 'shortDesc', label: 'Short Description', type: 'text' },
-                      { id: 'demoUrl', label: 'Demo Gateway URL', type: 'url' },
-                      { id: 'imageUrl', label: 'Visual Asset Identifier', type: 'url' },
-                      { id: 'agentUrl', label: 'Agent Access URL', type: 'url' },
-                    ].map((field) => (
-                      <div key={field.id}>
-                        <label className="block text-[10px] font-bold text-[#52525b] uppercase tracking-[0.2em] mb-2.5">{field.label}</label>
-                        <input
-                          type={field.type}
-                          value={form[field.id as keyof FormData]}
-                          onChange={(e) => setForm({ ...form, [field.id]: e.target.value })}
-                          required
-                          className="w-full bg-[#09090b] border border-[#27272a] rounded-md px-4 py-3 text-sm text-white focus:outline-none focus:border-white transition-all duration-200"
-                        />
-                      </div>
-                    ))}
-
-                    <div>
-                      <label className="block text-[10px] font-bold text-[#52525b] uppercase tracking-[0.2em] mb-2.5">Architecture Category</label>
-                      <select
-                        value={form.category}
-                        onChange={(e) => setForm({ ...form, category: e.target.value })}
-                        className="w-full bg-[#09090b] border border-[#27272a] rounded-md px-4 py-3 text-sm text-white focus:outline-none focus:border-white cursor-pointer transition-all duration-200"
-                      >
-                        {categories.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-[10px] font-bold text-[#52525b] uppercase tracking-[0.2em] mb-2.5">System Description</label>
-                      <textarea
-                        value={form.description}
-                        onChange={(e) => setForm({ ...form, description: e.target.value })}
-                        required
-                        rows={3}
-                        className="w-full bg-[#09090b] border border-[#27272a] rounded-md px-4 py-3 text-sm text-white focus:outline-none focus:border-white transition-all duration-200 resize-none"
-                      />
-                    </div>
-
-                    <div className="pt-6 border-t border-[#27272a]">
-                      <button
-                        type="submit"
-                        disabled={!connected}
-                        className="w-full py-3.5 rounded-md bg-white text-black font-bold text-xs uppercase tracking-widest transition-all hover:bg-zinc-200 disabled:opacity-50 active:scale-[0.98]"
-                      >
-                        {connected ? 'Deploy System' : 'Connect to Deploy'}
-                      </button>
-                    </div>
-                  </form>
-                )}
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-
-      <div className="container mx-auto px-6 max-w-7xl py-12 md:py-16">
-        
+      <div className="container mx-auto px-6 max-w-4xl py-12 md:py-16">
         <Link
           href="/"
           className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-[#52525b] hover:text-white transition-colors mb-12 group"
         >
           <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
-          Return to Home
+          Return to Hub
         </Link>
 
-        <div className="flex items-end justify-between mb-16">
-          <div>
-            <h1 className="text-4xl font-bold text-white tracking-tight">Deployment</h1>
-            <p className="text-[#71717a] mt-3 max-w-2xl text-base leading-relaxed">
-              Provider node portal. Initialize new infrastructure agents and monitor distribution volume across the network.
-            </p>
-          </div>
-          <button
-            onClick={() => setShowModal(true)}
-            className="flex items-center gap-2 px-6 py-3 rounded-md bg-white hover:bg-zinc-200 text-black font-bold text-xs uppercase tracking-widest transition-all shadow-lg active:scale-[0.97]"
-          >
-            <Plus className="w-4 h-4" /> Initialize System
-          </button>
+        <div className="mb-12 border-b border-[#27272a] pb-8">
+          <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight mb-4">List Your Agent</h1>
+          <p className="text-[#71717a] text-lg max-w-2xl">Publish your AI agent to the decentralized marketplace. Set your price, provide a demo, and start earning Solana.</p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 mb-20">
-          {mockStats.map((stat, i) => {
-            const Icon = stat.icon;
-            return (
-              <motion.div
-                key={stat.label}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.05, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                className="bg-[#18181b] border border-[#27272a] rounded-lg p-8 group hover:border-[#3f3f46] transition-all duration-300"
+        <AnimatePresence mode="wait">
+          {submitted ? (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="py-24 text-center border border-[#27272a] rounded-xl bg-[#18181b] shadow-2xl"
+            >
+              <div className="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                <CheckCircle className="w-10 h-10 text-emerald-400" />
+              </div>
+              <h2 className="text-3xl font-black text-white mb-3 tracking-tight">System Deployed</h2>
+              <p className="text-[#71717a] text-base mb-8 max-w-md mx-auto">Your AI agent has been successfully listed on the marketplace protocol.</p>
+              <Link
+                href="/marketplace"
+                className="inline-flex px-8 py-4 bg-white text-black font-black text-xs uppercase tracking-widest rounded-lg hover:bg-zinc-200 transition-colors"
               >
-                <div className="flex items-center gap-4 mb-6">
-                  <Icon className="w-5 h-5 text-[#52525b] group-hover:text-white transition-colors" />
-                  <span className="text-[10px] font-bold text-[#52525b] uppercase tracking-[0.2em] group-hover:text-[#71717a] transition-colors">{stat.label}</span>
-                </div>
-                <p className="text-3xl font-bold text-white tracking-tight">{stat.value}</p>
-              </motion.div>
-            );
-          })}
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-          <div className="lg:col-span-2">
-            <h2 className="text-lg font-bold text-white uppercase tracking-widest mb-8">Active Systems</h2>
-            <div className="bg-[#18181b]/50 backdrop-blur-sm border border-[#27272a] rounded-lg overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-[#27272a] bg-[#09090b]/50">
-                      <th className="px-6 py-5 text-left text-[10px] font-bold text-[#52525b] uppercase tracking-[0.2em]">System Identifier</th>
-                      <th className="px-6 py-5 text-left text-[10px] font-bold text-[#52525b] uppercase tracking-[0.2em]">Architecture</th>
-                      <th className="px-6 py-5 text-left text-[10px] font-bold text-[#52525b] uppercase tracking-[0.2em]">Price Rate</th>
-                      <th className="px-6 py-5 text-left text-[10px] font-bold text-[#52525b] uppercase tracking-[0.2em]">Volume</th>
-                      <th className="px-6 py-5 text-left text-[10px] font-bold text-[#52525b] uppercase tracking-[0.2em]">Protocol Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#27272a] text-sm">
-                    {mockListings.map((listing) => (
-                      <tr key={listing.id} className="hover:bg-white/5 transition-colors">
-                        <td className="px-6 py-5 font-bold text-white tracking-tight">{listing.name}</td>
-                        <td className="px-6 py-5 text-[#71717a] font-medium">{listing.category}</td>
-                        <td className="px-6 py-5 text-white font-mono">◎ {listing.price}</td>
-                        <td className="px-6 py-5 text-[#52525b] font-medium">{listing.sales}</td>
-                        <td className="px-6 py-5">{statusBadge(listing.status)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <h2 className="text-lg font-bold text-white uppercase tracking-widest mb-8">Network Feed</h2>
-            <div className="bg-[#18181b]/50 backdrop-blur-sm border border-[#27272a] rounded-lg overflow-hidden">
-              <div className="divide-y divide-[#27272a]">
-                {mockSales.map((sale, i) => (
-                  <div key={i} className="px-6 py-6 group hover:bg-white/5 transition-colors">
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <span className="text-sm font-bold text-white block mb-1 tracking-tight">{sale.agent}</span>
-                        <span className="text-[10px] text-[#52525b] font-mono group-hover:text-[#71717a] transition-colors uppercase tracking-widest">{sale.buyer}</span>
-                      </div>
-                      <div className="text-right">
-                        <span className="text-sm font-bold text-white block mb-1">+◎ {sale.amount}</span>
-                        <span className="text-[10px] text-[#52525b] uppercase tracking-widest font-bold">{sale.time}</span>
-                      </div>
-                    </div>
-                    <a
-                      href={`https://explorer.solana.com/tx/${sale.tx}?cluster=devnet`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-[#52525b] hover:text-white transition-all mt-3"
-                    >
-                      <Activity className="w-3.5 h-3.5" /> Explorer
-                    </a>
+                View in Marketplace
+              </Link>
+            </motion.div>
+          ) : (
+            <motion.form
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              onSubmit={handleSubmit}
+              className="space-y-10"
+            >
+              {/* Basic Info Section */}
+              <div className="bg-[#18181b] border border-[#27272a] rounded-xl p-8 shadow-xl">
+                <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-3">
+                  <Activity className="w-5 h-5 text-[#71717a]" /> Basic Information
+                </h2>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                  <div>
+                    <label className={labelClass}>Agent Name</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. ImageCraft Pro"
+                      value={form.name}
+                      onChange={(e) => setForm({ ...form, name: e.target.value })}
+                      required
+                      className={inputClass}
+                    />
                   </div>
-                ))}
+                  <div>
+                    <label className={labelClass}>Architecture Category</label>
+                    <select
+                      value={form.category}
+                      onChange={(e) => setForm({ ...form, category: e.target.value })}
+                      className={inputClass + " cursor-pointer appearance-none"}
+                    >
+                      {categories.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="mb-6">
+                  <label className={labelClass}>Short Tagline</label>
+                  <input
+                    type="text"
+                    placeholder="Brief 1-sentence summary of what it does"
+                    value={form.shortDesc}
+                    onChange={(e) => setForm({ ...form, shortDesc: e.target.value })}
+                    required
+                    className={inputClass}
+                  />
+                </div>
+
+                <div>
+                  <label className={labelClass}>Full Description</label>
+                  <textarea
+                    placeholder="Detailed explanation of features, capabilities, and technical specs..."
+                    value={form.description}
+                    onChange={(e) => setForm({ ...form, description: e.target.value })}
+                    required
+                    rows={5}
+                    className={inputClass + " resize-none"}
+                  />
+                </div>
               </div>
-            </div>
-          </div>
-        </div>
+
+              {/* Media & Links Section */}
+              <div className="bg-[#18181b] border border-[#27272a] rounded-xl p-8 shadow-xl">
+                <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-3">
+                  <LinkIcon className="w-5 h-5 text-[#71717a]" /> Assets & Links
+                </h2>
+
+                <div className="space-y-6">
+                  <div>
+                    <label className={labelClass}>Visual Asset URL (Thumbnail)</label>
+                    <div className="relative">
+                      <ImageIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#52525b]" />
+                      <input
+                        type="url"
+                        placeholder="https://example.com/image.jpg"
+                        value={form.imageUrl}
+                        onChange={(e) => setForm({ ...form, imageUrl: e.target.value })}
+                        required
+                        className={inputClass + " pl-11"}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className={labelClass}>Demo Gateway URL (iFrame compatible)</label>
+                    <div className="relative">
+                      <Activity className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#52525b]" />
+                      <input
+                        type="url"
+                        placeholder="https://your-demo-site.com"
+                        value={form.demoUrl}
+                        onChange={(e) => setForm({ ...form, demoUrl: e.target.value })}
+                        required
+                        className={inputClass + " pl-11"}
+                      />
+                    </div>
+                    <p className="text-[11px] text-[#52525b] mt-2 ml-1">This will be embedded in the "Try Before You Buy" modal.</p>
+                  </div>
+
+                  <div>
+                    <label className={labelClass}>Private Access URL (Delivery)</label>
+                    <div className="relative">
+                      <UploadCloud className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#52525b]" />
+                      <input
+                        type="url"
+                        placeholder="https://private-api.com or Download Link"
+                        value={form.agentUrl}
+                        onChange={(e) => setForm({ ...form, agentUrl: e.target.value })}
+                        required
+                        className={inputClass + " pl-11"}
+                      />
+                    </div>
+                    <p className="text-[11px] text-[#52525b] mt-2 ml-1">This is ONLY revealed to buyers after successful purchase verification.</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Pricing Section */}
+              <div className="bg-[#18181b] border border-[#27272a] rounded-xl p-8 shadow-xl">
+                <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-3">
+                  <DollarSign className="w-5 h-5 text-[#71717a]" /> Pricing Strategy
+                </h2>
+
+                <div>
+                  <label className={labelClass}>Price in SOL</label>
+                  <div className="relative max-w-sm">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-white">◎</span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      placeholder="0.50"
+                      value={form.priceSOL}
+                      onChange={(e) => setForm({ ...form, priceSOL: e.target.value })}
+                      required
+                      className={inputClass + " pl-10 text-lg font-bold"}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Submit Button */}
+              <button
+                type="submit"
+                disabled={submitting}
+                className="w-full py-5 bg-white text-black font-black text-sm uppercase tracking-widest rounded-xl hover:bg-zinc-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-2xl shadow-white/10"
+              >
+                {submitting ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <Loader2 className="w-5 h-5 animate-spin" /> Initializing Protocol...
+                  </span>
+                ) : (mounted && connected) ? (
+                  'List Agent on Marketplace'
+                ) : (
+                  'Connect Wallet to List'
+                )}
+              </button>
+            </motion.form>
+          )}
+        </AnimatePresence>
       </div>
     </>
   );

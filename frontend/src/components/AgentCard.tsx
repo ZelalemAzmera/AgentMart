@@ -56,10 +56,25 @@ export function AgentCard({ agent, index = 0 }: AgentCardProps) {
             />
             <div className="absolute inset-0 bg-gradient-to-t from-[#18181b]/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             
-            <div className="absolute top-4 left-4">
+            <div className="absolute top-4 left-4 flex flex-col gap-2">
+              {agent.totalSales && agent.totalSales > 10 ? (
+                <span className="px-2.5 py-1 bg-amber-500/90 backdrop-blur-md rounded-[4px] border border-white/10 text-[10px] uppercase tracking-widest font-bold text-white shadow-lg flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" /> Popular
+                </span>
+              ) : null}
               <span className="px-2.5 py-1 bg-black/60 backdrop-blur-md rounded-[4px] border border-white/10 text-[10px] uppercase tracking-widest font-bold text-white shadow-lg">
                 {agent.category}
               </span>
+            </div>
+
+            {/* Base44 style Demo Overlay Button */}
+            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+              <button
+                onClick={(e) => { e.preventDefault(); handleDemo(e); }}
+                className="pointer-events-auto flex items-center gap-2 px-5 py-2.5 bg-white text-black text-xs font-bold uppercase tracking-widest rounded-full hover:bg-zinc-200 active:scale-95 transition-all duration-200 shadow-xl shadow-black/50"
+              >
+                ▶ Demo
+              </button>
             </div>
           </div>
 
@@ -98,20 +113,16 @@ export function AgentCard({ agent, index = 0 }: AgentCardProps) {
               </div>
 
               {/* Actions */}
-              <div className="flex gap-2">
+              <div className="flex items-center gap-4">
+                <div className="flex flex-col text-right">
+                  <span className="text-[9px] uppercase tracking-widest text-[#52525b] font-bold">Sales</span>
+                  <span className="text-xs font-bold text-white">{agent.totalSales || 0}</span>
+                </div>
+                <div className="h-6 w-px bg-[#27272a]" />
                 <button
-                  onClick={handleDemo}
-                  title="Demo Agent"
-                  className="p-2 text-[#71717a] hover:text-white hover:bg-white/5 rounded-md border border-transparent hover:border-white/10 transition-all duration-200"
+                  className="text-xs font-bold text-white hover:text-emerald-400 transition-colors uppercase tracking-wider flex items-center gap-1"
                 >
-                  <ExternalLink className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={handleAddToCart}
-                  className="flex items-center gap-2 px-4 py-1.5 bg-white text-black text-xs font-bold uppercase tracking-wider rounded-md hover:bg-zinc-200 active:scale-[0.97] transition-all duration-200 shadow-sm"
-                >
-                  <ShoppingCart className="w-3.5 h-3.5" />
-                  Cart
+                  View Details <span className="text-base leading-none">&rarr;</span>
                 </button>
               </div>
             </div>
