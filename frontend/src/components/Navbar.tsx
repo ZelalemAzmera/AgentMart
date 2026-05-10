@@ -36,7 +36,6 @@ export function Navbar({ isTransparent = false }: { isTransparent?: boolean }) {
   ];
 
   return (
-  return (
     <>
       <header 
         className={clsx(
