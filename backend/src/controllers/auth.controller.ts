@@ -54,8 +54,11 @@ export const verifySignature = async (req: Request, res: Response, next: NextFun
       throw new AppError('Nonce has expired', 400, 'NONCE_EXPIRED');
     }
 
+    // Construct the exact message that the frontend signed
+    const messageToVerify = `Sign this message to authenticate with AgentMart.\nNonce: ${nonce}`;
+
     // Verify signature using solana service
-    const isValid = solanaService.verifyWalletSignature(walletAddress, nonce, signature);
+    const isValid = solanaService.verifyWalletSignature(walletAddress, messageToVerify, signature);
 
     if (!isValid) {
       throw new AppError('Invalid signature', 401, 'INVALID_SIGNATURE');
